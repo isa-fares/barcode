@@ -1,10 +1,5 @@
 import React from 'react';
-
-interface StatusMessageProps {
-  status: 'loading' | 'scanning' | 'success' | 'error' | 'permission-denied';
-  message: string;
-  onRetry?: () => void;
-}
+import type { StatusMessageProps } from '../types';
 
 const StatusMessage: React.FC<StatusMessageProps> = ({ status, message, onRetry }) => {
   return (

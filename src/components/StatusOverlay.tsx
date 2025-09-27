@@ -1,9 +1,5 @@
 import React from 'react';
-
-interface StatusOverlayProps {
-  status: 'loading' | 'scanning' | 'success' | 'error' | 'permission-denied';
-  message: string;
-}
+import type { StatusOverlayProps } from '../types';
 
 const StatusOverlay: React.FC<StatusOverlayProps> = ({ status, message }) => {
   if (status === 'scanning') return null;

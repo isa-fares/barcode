@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import BarcodeScanner from './components/BarcodeScanner';
+import { BarcodeScanner } from './components';
 
 function App() {
   // معالجة نجاح المسح - إعادة التوجيه الفوري

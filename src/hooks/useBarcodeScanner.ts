@@ -1,16 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { BrowserMultiFormatReader, NotFoundException } from '@zxing/library';
-
-interface ScanState {
-  status: 'loading' | 'scanning' | 'success' | 'error' | 'permission-denied';
-  message: string;
-  lastScannedCode?: string;
-}
-
-interface UseBarcodeScanner {
-  onScanSuccess: (url: string) => void;
-  onScanError: (error: string) => void;
-}
+import type { ScanState, UseBarcodeScanner } from '../types';
 
 export const useBarcodeScanner = ({ onScanSuccess, onScanError }: UseBarcodeScanner) => {
   const videoRef = useRef<HTMLVideoElement>(null);

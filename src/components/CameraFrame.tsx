@@ -1,9 +1,5 @@
 import React from 'react';
-
-interface CameraFrameProps {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  isScanning: boolean;
-}
+import type { CameraFrameProps } from '../types';
 
 const CameraFrame: React.FC<CameraFrameProps> = ({ videoRef, isScanning }) => {
   return (

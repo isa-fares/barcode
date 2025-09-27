@@ -5,11 +5,7 @@ import CameraFrame from './CameraFrame';
 import StatusOverlay from './StatusOverlay';
 import StatusMessage from './StatusMessage';
 import ScanningTips from './ScanningTips';
-
-interface BarcodeScannerProps {
-  onScanSuccess: (url: string) => void;
-  onScanError: (error: string) => void;
-}
+import type { BarcodeScannerProps } from '../types';
 
 const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScanSuccess, onScanError }) => {
   const { videoRef, scanState, handleRetry } = useBarcodeScanner({
