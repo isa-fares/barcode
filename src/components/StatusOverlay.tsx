@@ -2,7 +2,7 @@ import React from 'react';
 import type { StatusOverlayProps } from '../types';
 
 const StatusOverlay: React.FC<StatusOverlayProps> = ({ status, message }) => {
-  if (status === 'scanning') return null;
+  if (status === 'scanning' || status === 'stopped') return null;
 
   const renderIcon = () => {
     switch (status) {
@@ -26,6 +26,14 @@ const StatusOverlay: React.FC<StatusOverlayProps> = ({ status, message }) => {
             </svg>
           </div>
         );
+      case 'stopped':
+        return (
+          <div className="w-20 h-20 md:w-24 md:h-24 bg-blue-600 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg">
+            <svg className="w-10 h-10 md:w-12 md:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 12l2 2 4-4" />
+            </svg>
+          </div>
+        );
       default:
         return null;
     }
@@ -44,9 +52,9 @@ const StatusOverlay: React.FC<StatusOverlayProps> = ({ status, message }) => {
 
   return (
     <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-      <div className={`text-center text-white bg-black/50 backdrop-blur-sm rounded-2xl p-6 md:p-8 ${getAnimationClass()}`}>
+      <div className={`text-center text-white bg-black/70 backdrop-blur-sm rounded-2xl p-6 md:p-8 max-w-xs md:max-w-md ${getAnimationClass()}`}>
         {renderIcon()}
-        <p className="text-lg md:text-xl font-medium">{message}</p>
+        <p className="text-lg md:text-xl font-medium break-words">{message}</p>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 import type { StatusMessageProps } from '../types';
 
-const StatusMessage: React.FC<StatusMessageProps> = ({ status, message, onRetry }) => {
+const StatusMessage: React.FC<StatusMessageProps> = ({ status, message, onRetry, onRestart, scannedData }) => {
   return (
     <div className="mt-8 md:mt-12 text-center">
       <p className="text-gray-800 dark:text-gray-200 text-xl md:text-2xl font-medium mb-4">
@@ -15,7 +15,7 @@ const StatusMessage: React.FC<StatusMessageProps> = ({ status, message, onRetry 
       )}
       
       {status === 'permission-denied' && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 md:p-8 mt-6 max-w-md mx-auto">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 md:p-8 mt-6 max-w-lg mx-auto">
           <div className="flex items-center justify-center mb-4">
             <div className="w-12 h-12 md:w-16 md:h-16 bg-red-500 rounded-full flex items-center justify-center">
               <svg className="w-6 h-6 md:w-8 md:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,6 +45,27 @@ const StatusMessage: React.FC<StatusMessageProps> = ({ status, message, onRetry 
         >
           إعادة المحاولة
         </button>
+      )}
+
+      {status === 'stopped' && scannedData && (
+        <div className="mt-6 bg-gray-100 rounded-xl p-4 md:p-6 border border-gray-200">
+          <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-3">
+            البيانات المسحوبة:
+          </h3>
+          <div className="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+            <p className="text-gray-700 text-base md:text-lg break-all font-mono">
+              {scannedData}
+            </p>
+          </div>
+          {onRestart && (
+            <button
+              onClick={onRestart}
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 md:px-10 md:py-4 rounded-xl text-lg md:text-xl font-medium transition-colors shadow-lg w-full"
+            >
+              مسح رمز جديد
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

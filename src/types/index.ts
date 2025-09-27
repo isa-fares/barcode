@@ -1,9 +1,10 @@
 // Shared Types for Barcode Scanner Components
 
 export interface ScanState {
-  status: 'loading' | 'scanning' | 'success' | 'error' | 'permission-denied';
+  status: 'loading' | 'scanning' | 'success' | 'error' | 'permission-denied' | 'stopped';
   message: string;
   lastScannedCode?: string;
+  scannedData?: string;
 }
 
 export interface BarcodeScannerProps {
@@ -30,6 +31,8 @@ export interface StatusMessageProps {
   status: ScanState['status'];
   message: string;
   onRetry?: () => void;
+  onRestart?: () => void;
+  scannedData?: string;
 }
 
 export interface UseBarcodeScanner {

@@ -5,6 +5,7 @@ import type { ScanState, UseBarcodeScanner } from '../types';
 export const useBarcodeScanner = ({ onScanSuccess, onScanError }: UseBarcodeScanner) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const isScanningRef = useRef<boolean>(false);
   const [scanState, setScanState] = useState<ScanState>({
     status: 'loading',
     message: 'جاري تحميل الكاميرا...'
@@ -28,44 +29,54 @@ export const useBarcodeScanner = ({ onScanSuccess, onScanError }: UseBarcodeScan
 
   // معالجة نتيجة المسح
   const handleScanResult = useCallback((result: string) => {
-    if (scanState.lastScannedCode === result) {
-      return; // تجنب معالجة نفس الكود مرتين
+    // التحقق من أن المسح ما زال نشطاً
+    if (!isScanningRef.current || scanState.lastScannedCode === result) {
+      return; // تجنب معالجة إذا توقف المسح أو تكرار نفس الكود
+    }
+
+    // إيقاف المسح فوراً
+    isScanningRef.current = false;
+
+    // إيقاف المسح ونهائياً
+    if (readerRef.current) {
+      try {
+        readerRef.current.reset();
+        // إيقاف تدفق الفيديو بالكامل
+        if (videoRef.current && videoRef.current.srcObject) {
+          const stream = videoRef.current.srcObject as MediaStream;
+          stream.getTracks().forEach(track => track.stop());
+          videoRef.current.srcObject = null;
+        }
+      } catch (error) {
+        console.warn('Error stopping scanner:', error);
+      }
     }
 
     setScanState(prev => ({ ...prev, lastScannedCode: result }));
 
+    // التحقق من وجود رابط
     if (isValidUrl(result)) {
-      setScanState({
-        status: 'success',
-        message: 'تم العثور على رابط صالح! جاري التوجيه...',
-        lastScannedCode: result
-      });
-      
-      // توجيه فوري للرابط
-      setTimeout(() => {
-        const finalUrl = result.startsWith('http') ? result : `https://${result}`;
-        onScanSuccess(finalUrl);
-      }, 1000);
+      // فتح الرابط مباشرة بدون انتظار
+      const finalUrl = result.startsWith('http') ? result : `https://${result}`;
+      onScanSuccess(finalUrl);
     } else {
+      // إذا لم يكن رابط، إيقاف المسح وعرض المعلومات
       setScanState({
-        status: 'error',
-        message: 'لم يتم العثور على رابط صالح - استمرار المحاولة...',
-        lastScannedCode: result
+        status: 'stopped',
+        message: 'تم إيقاف المسح - اضغط إعادة المسح للمتابعة',
+        lastScannedCode: result,
+        scannedData: result
       });
-      onScanError('Invalid URL detected');
-      
-      // العودة للمسح بعد 2 ثانية
-      setTimeout(() => {
-        setScanState({
-          status: 'scanning',
-          message: 'جاري البحث عن الكود...'
-        });
-      }, 2000);
     }
-  }, [scanState.lastScannedCode, isValidUrl, onScanSuccess, onScanError]);
+  }, [scanState.lastScannedCode, isValidUrl, onScanSuccess]);
 
   // بدء الكاميرا والمسح
   const startScanning = useCallback(async () => {
+    // تجنب بدء المسح إذا كان قيد التشغيل بالفعل
+    if (isScanningRef.current) {
+      return;
+    }
+
     try {
       setScanState({
         status: 'loading',
@@ -83,29 +94,41 @@ export const useBarcodeScanner = ({ onScanSuccess, onScanError }: UseBarcodeScan
         throw new Error('لا توجد كاميرا متاحة');
       }
 
-      // استخدام الكاميرا الخلفية إن وجدت (للموبايل)
+      // إجبار استخدام الكاميرا الخلفية في الموبايل
+      let selectedDeviceId = videoDevices[0].deviceId;
+      
+      // البحث عن الكاميرا الخلفية أولاً
       const backCamera = videoDevices.find(device => 
         device.label.toLowerCase().includes('back') || 
-        device.label.toLowerCase().includes('rear')
+        device.label.toLowerCase().includes('rear') ||
+        device.label.toLowerCase().includes('environment')
       );
       
-      const selectedDeviceId = backCamera?.deviceId || videoDevices[0].deviceId;
+      // في الموبايل، استخدم الكاميرا الخلفية حصرياً
+      if (backCamera && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        selectedDeviceId = backCamera.deviceId;
+      } else if (backCamera) {
+        selectedDeviceId = backCamera.deviceId;
+      }
 
       setScanState({
         status: 'scanning',
         message: 'جاري البحث عن الكود...'
       });
 
+      // تفعيل المسح
+      isScanningRef.current = true;
+
       // بدء المسح المستمر
       await reader.decodeFromVideoDevice(
         selectedDeviceId,
         videoRef.current!,
         (result, error) => {
-          if (result) {
+          if (result && isScanningRef.current) {
             handleScanResult(result.getText());
           }
           // تجاهل الأخطاء العادية (عدم وجود كود في الإطار)
-          if (error && !(error instanceof NotFoundException)) {
+          if (error && !(error instanceof NotFoundException) && isScanningRef.current) {
             console.warn('Scan error:', error);
           }
         }
@@ -113,6 +136,9 @@ export const useBarcodeScanner = ({ onScanSuccess, onScanError }: UseBarcodeScan
 
     } catch (error: unknown) {
       console.error('Camera error:', error);
+      
+      // إيقاف المسح في حالة الخطأ
+      isScanningRef.current = false;
       
       const errorObj = error as Error;
       if (errorObj.name === 'NotAllowedError' || errorObj.message?.includes('Permission')) {
@@ -132,9 +158,18 @@ export const useBarcodeScanner = ({ onScanSuccess, onScanError }: UseBarcodeScan
 
   // تنظيف الموارد
   const cleanup = useCallback(() => {
+    // إيقاف المسح
+    isScanningRef.current = false;
+    
     if (readerRef.current) {
       readerRef.current.reset();
       readerRef.current = null;
+    }
+    // إيقاف تدفق الفيديو
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
     }
   }, []);
 
@@ -144,15 +179,31 @@ export const useBarcodeScanner = ({ onScanSuccess, onScanError }: UseBarcodeScan
     startScanning();
   }, [cleanup, startScanning]);
 
+  // إعادة تشغيل المسح بعد الإيقاف
+  const restartScanning = useCallback(() => {
+    // تنظيف الموارد أولاً
+    cleanup();
+    setScanState({
+      status: 'loading',
+      message: 'جاري إعادة تشغيل المسح...'
+    });
+    // إعادة تشغيل المسح
+    setTimeout(() => {
+      startScanning();
+    }, 100);
+  }, [cleanup, startScanning]);
+
   // بدء المسح عند تحميل المكون
   useEffect(() => {
     startScanning();
     return cleanup;
-  }, [startScanning, cleanup]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     videoRef,
     scanState,
-    handleRetry
+    handleRetry,
+    restartScanning
   };
 };

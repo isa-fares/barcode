@@ -81,8 +81,9 @@ button:focus-visible {
 
 /* Custom animations for scanning */
 @keyframes scan-line {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(300%); }
+  0% { transform: translateY(600%); }
+  50% { transform: translateY(4000%); }
+  100% { transform: translateY(600%); }
 }
 
 @keyframes pulse-success {
@@ -97,7 +98,7 @@ button:focus-visible {
 }
 
 .scan-line {
-  animation: scan-line 2s linear infinite;
+  animation: scan-line 4s linear infinite;
 }
 
 .pulse-success {

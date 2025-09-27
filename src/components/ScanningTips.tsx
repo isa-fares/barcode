@@ -33,17 +33,18 @@ const ScanningTips: React.FC = () => {
 
   return (
     <div className="mt-12 md:mt-16 max-w-lg md:max-w-2xl text-center">
-      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg border border-gray-200 dark:border-gray-700">
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl mb-20 p-12  shadow-lg border border-gray-200 dark:border-gray-700">
         <h3 className="text-gray-900 dark:text-white font-semibold mb-6 text-xl md:text-2xl">
           نصائح للمسح الأمثل:
         </h3>
         <ul className="text-slate-600 dark:text-slate-300 text-lg md:text-xl space-y-4 text-right">
           {tips.map((tip, index) => (
-            <li key={index} className="flex items-center justify-end">
-              <span>{tip.text}</span>
-              <div className={`mr-4 w-8 h-8 md:w-10 md:h-10 ${tip.bgColor} rounded-full flex items-center justify-center`}>
+            <li key={index} className="flex items-center justify-start">
+              <div className={`ml-4 w-8 h-8 md:w-10 md:h-10 ${tip.bgColor} rounded-full flex items-center justify-center`}>
                 {tip.icon}
               </div>
+              <span>{tip.text}</span>
+
             </li>
           ))}
         </ul>
