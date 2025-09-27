@@ -9,7 +9,7 @@
 
   color-scheme: light dark;
   color: #1f2937;
-  background-color: #f8fafc;
+  background-color: #f9fafb;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -31,7 +31,17 @@ body {
   min-width: 320px;
   min-height: 100vh;
   direction: rtl;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f9fafb;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #1c1c1e;
+  }
+  :root {
+    color: #ffffff;
+    background-color: #1c1c1e;
+  }
 }
 
 h1 {

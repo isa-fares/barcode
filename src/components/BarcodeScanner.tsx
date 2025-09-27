@@ -161,71 +161,71 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScanSuccess, onScanEr
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 arabic">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 md:p-8 arabic bg-gray-50 dark:bg-gray-900">
       {/* العنوان */}
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">
+      <div className="text-center mb-8 md:mb-12">
+        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-4">
           ماسح الباركود والـ QR
         </h1>
-        <p className="text-white/80 text-lg">
+        <p className="text-slate-500 dark:text-slate-400 text-xl md:text-2xl">
           وجه الكاميرا نحو الكود للمسح التلقائي
         </p>
       </div>
 
       {/* منطقة الكاميرا */}
-      <div className="relative w-full max-w-md mx-auto">
-        <div className="relative bg-black rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md md:max-w-2xl mx-auto">
+        <div className="relative bg-black rounded-3xl shadow-xl overflow-hidden border-2 border-gray-200 dark:border-gray-700">
           <video
             ref={videoRef}
-            className="w-full h-80 object-cover"
+            className="w-full h-80 md:h-96 lg:h-[500px] object-cover"
             playsInline
             muted
           />
           
           {/* إطار المسح */}
-          <div className="absolute inset-4 border-2 border-white/50 rounded-xl">
+          <div className="absolute inset-6 md:inset-8 border-2 border-blue-500/70 rounded-2xl">
             <div className="absolute inset-0">
               {/* زوايا الإطار */}
-              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white"></div>
-              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white"></div>
-              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white"></div>
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white"></div>
+              <div className="absolute top-0 left-0 w-8 h-8 md:w-12 md:h-12 border-t-4 border-l-4 border-blue-500"></div>
+              <div className="absolute top-0 right-0 w-8 h-8 md:w-12 md:h-12 border-t-4 border-r-4 border-blue-500"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-8 md:w-12 md:h-12 border-b-4 border-l-4 border-blue-500"></div>
+              <div className="absolute bottom-0 right-0 w-8 h-8 md:w-12 md:h-12 border-b-4 border-r-4 border-blue-500"></div>
               
               {/* خط المسح المتحرك */}
               {scanState.status === 'scanning' && (
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent scan-line"></div>
+                <div className="absolute inset-x-0 top-0 h-1 md:h-2 bg-gradient-to-r from-transparent via-blue-500 to-transparent scan-line"></div>
               )}
             </div>
           </div>
 
           {/* تراكب الحالة */}
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
             {scanState.status === 'loading' && (
-              <div className="text-center text-white">
-                <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-3"></div>
-                <p className="text-sm">{scanState.message}</p>
+              <div className="text-center text-white bg-black/50 backdrop-blur-sm rounded-2xl p-6 md:p-8">
+                <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-lg md:text-xl font-medium">{scanState.message}</p>
               </div>
             )}
             
             {scanState.status === 'success' && (
-              <div className="text-center text-white pulse-success">
-                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-3 mx-auto">
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              <div className="text-center text-white pulse-success bg-black/50 backdrop-blur-sm rounded-2xl p-6 md:p-8">
+                <div className="w-20 h-20 md:w-24 md:h-24 bg-green-600 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg">
+                  <svg className="w-10 h-10 md:w-12 md:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium">{scanState.message}</p>
+                <p className="text-lg md:text-xl font-medium">{scanState.message}</p>
               </div>
             )}
             
             {scanState.status === 'error' && (
-              <div className="text-center text-white shake-error">
-                <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mb-3 mx-auto">
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              <div className="text-center text-white shake-error bg-black/50 backdrop-blur-sm rounded-2xl p-6 md:p-8">
+                <div className="w-20 h-20 md:w-24 md:h-24 bg-red-600 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg">
+                  <svg className="w-10 h-10 md:w-12 md:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium">{scanState.message}</p>
+                <p className="text-lg md:text-xl font-medium">{scanState.message}</p>
               </div>
             )}
           </div>
@@ -233,25 +233,33 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScanSuccess, onScanEr
       </div>
 
       {/* رسالة الحالة */}
-      <div className="mt-6 text-center">
-        <p className="text-white/90 text-lg font-medium mb-2">
+      <div className="mt-8 md:mt-12 text-center">
+        <p className="text-gray-800 dark:text-gray-200 text-xl md:text-2xl font-medium mb-4">
           {scanState.message}
         </p>
         
         {scanState.status === 'scanning' && (
-          <p className="text-white/70 text-sm">
+          <p className="text-slate-500 dark:text-slate-400 text-lg md:text-xl">
             قرّب الكود من الكاميرا للحصول على أفضل نتيجة
           </p>
         )}
         
         {scanState.status === 'permission-denied' && (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mt-4">
-            <p className="text-red-100 text-sm mb-3">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 md:p-8 mt-6 max-w-md mx-auto">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-red-500 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 md:w-8 md:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-red-800 dark:text-red-200 text-lg md:text-xl mb-6">
               {scanState.message}
             </p>
             <button
               onClick={handleRetry}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 md:px-10 md:py-4 rounded-xl text-lg md:text-xl font-medium transition-colors shadow-lg"
             >
               إعادة المحاولة
             </button>
@@ -261,7 +269,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScanSuccess, onScanEr
         {scanState.status === 'error' && scanState.message.includes('خطأ في الوصول') && (
           <button
             onClick={handleRetry}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors mt-4"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 md:px-10 md:py-4 rounded-xl text-lg md:text-xl font-medium transition-colors mt-6 shadow-lg"
           >
             إعادة المحاولة
           </button>
@@ -269,21 +277,33 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScanSuccess, onScanEr
       </div>
 
       {/* تلميحات الاستخدام */}
-      <div className="mt-8 max-w-sm text-center">
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-          <h3 className="text-white font-medium mb-2">نصائح للمسح الأمثل:</h3>
-          <ul className="text-white/80 text-sm space-y-1 text-right">
+      <div className="mt-12 md:mt-16 max-w-lg md:max-w-2xl text-center">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-gray-900 dark:text-white font-semibold mb-6 text-xl md:text-2xl">نصائح للمسح الأمثل:</h3>
+          <ul className="text-slate-600 dark:text-slate-300 text-lg md:text-xl space-y-4 text-right">
             <li className="flex items-center justify-end">
               <span>تأكد من وضوح الإضاءة</span>
-              <span className="ml-2">💡</span>
+              <div className="mr-4 w-8 h-8 md:w-10 md:h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
             </li>
             <li className="flex items-center justify-end">
               <span>اجعل الكود في وسط الإطار</span>
-              <span className="ml-2">🎯</span>
+              <div className="mr-4 w-8 h-8 md:w-10 md:h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
             </li>
             <li className="flex items-center justify-end">
               <span>تجنب اهتزاز اليد</span>
-              <span className="ml-2">📱</span>
+              <div className="mr-4 w-8 h-8 md:w-10 md:h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
             </li>
           </ul>
         </div>
