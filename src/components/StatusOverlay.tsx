@@ -26,14 +26,6 @@ const StatusOverlay: React.FC<StatusOverlayProps> = ({ status, message }) => {
             </svg>
           </div>
         );
-      case 'stopped':
-        return (
-          <div className="w-20 h-20 md:w-24 md:h-24 bg-blue-600 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg">
-            <svg className="w-10 h-10 md:w-12 md:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 12l2 2 4-4" />
-            </svg>
-          </div>
-        );
       default:
         return null;
     }
