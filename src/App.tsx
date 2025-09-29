@@ -18,6 +18,28 @@ function App() {
   });
   const [inputValue, setInputValue] = useState<string>('');
   const [cameraActive, setCameraActive] = useState<boolean>(true);
+  const [scannedUrl, setScannedUrl] = useState<string>('');
+  const [lastOpenedUrl, setLastOpenedUrl] = useState<string>('');
+  const isProcessingRef = useRef<boolean>(false);
+
+  // مفتاح التشفير
+  const encryptionKey = "MySecretKey2024";
+
+  // فك التشفير
+  const decrypt = useCallback((base64Text: string, key: string): string | null => {
+    try {
+      const text = atob(base64Text);
+      let result = '';
+      for (let i = 0; i < text.length; i++) {
+        const charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+        result += String.fromCharCode(charCode);
+      }
+      return result;
+    } catch (error) {
+      console.error("Decryption error:", error);
+      return null;
+    }
+  }, []);
 
   // تحقق من صحة الرابط
   const isValidUrl = useCallback((text: string): boolean => {
@@ -34,14 +56,21 @@ function App() {
     }
   }, []);
 
-  // معالجة نجاح المسح - عرض في iframe
+  // معالجة نجاح المسح - فتح الرابط مباشرة في تبويب جديد
   const handleScanSuccess = useCallback((url: string) => {
     console.log('Opening URL:', url);
-    const iframe = document.querySelector('iframe[name="iframe_qr"]') as HTMLIFrameElement;
-    if (iframe) {
-      iframe.src = url;
-    }
+    
+    // عرض الرابط فوق الكاميرا
+    setScannedUrl(url);
     setInputValue(url);
+    
+    // فتح الرابط مباشرة في تبويب جديد منفصل تماماً
+    window.open(url, '_blank', 'noopener,noreferrer');
+    
+    // إخفاء النص بعد نصف ثانية
+    setTimeout(() => {
+      setScannedUrl('');
+    }, 500);
   }, []);
 
   // معالجة أخطاء المسح
@@ -49,50 +78,210 @@ function App() {
     console.warn('Scan error:', error);
   }, []);
 
-  // معالجة نتيجة المسح
+  // معالجة نتيجة المسح - النسخة المحدثة والمحسنة
   const handleScanResult = useCallback((result: string) => {
-    if (!isScanningRef.current || scanState.lastScannedCode === result) {
+    if (!isScanningRef.current || scanState.lastScannedCode === result || isProcessingRef.current) {
       return;
     }
 
+    // تعيين حالة المعالجة لمنع القراءة المتكررة
+    isProcessingRef.current = true;
     setScanState(prev => ({ ...prev, lastScannedCode: result }));
 
-    // التحقق من الرقم المحدد
-    if (result === '442069400596830') {
-      // إيقاف المسح أولاً
-      isScanningRef.current = false;
-      if (readerRef.current) {
-        try {
-          readerRef.current.reset();
-          if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
-            videoRef.current.srcObject = null;
-          }
-        } catch (error) {
-          console.warn('Error stopping scanner:', error);
-        }
+    console.log('Scanned result:', result);
+
+    // محاولة فك تشفير النتيجة أولاً
+    const decryptedResult = decrypt(result, encryptionKey);
+    console.log('Decrypted result:', decryptedResult);
+
+    // إذا تم فك التشفير بنجاح
+    if (decryptedResult && decryptedResult !== result) {
+      console.log('Successfully decrypted barcode!');
+      
+      // عرض رسالة نجاح فك التشفير مع تحديد نوع البيانات
+      if (isValidUrl(decryptedResult)) {
+        setScannedUrl(`🔓 تم فك تشفير الرابط بنجاح! جاري الفتح...`);
+      } else if (decryptedResult === '442069400596830') {
+        setScannedUrl(`🔓 تم فك تشفير الرقم المخصص! ${decryptedResult}`);
+      } else {
+        setScannedUrl(`🔓 تم فك التشفير! البيانات: ${decryptedResult}`);
       }
       
-      window.open('https://scanned.page/p/82wMbe', '_blank');
-      setInputValue(result);
-      setCameraActive(false);
+      setTimeout(() => setScannedUrl(''), 4000);
+
+      // التحقق من الرقم المحدد بعد فك التشفير
+      if (decryptedResult === '442069400596830') {
+        const specialUrl = 'https://scanned.page/p/82wMbe';
+        
+        if (lastOpenedUrl === specialUrl) {
+          console.log('Link already opened, skipping');
+          isProcessingRef.current = false;
+          return;
+        }
+        
+        setInputValue(decryptedResult);
+        setLastOpenedUrl(specialUrl);
+        
+        // فتح الرابط المخصص مباشرة
+        const tempLink = document.createElement('a');
+        tempLink.href = specialUrl;
+        tempLink.target = '_blank';
+        tempLink.rel = 'noopener noreferrer';
+        
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        setCameraActive(false);
+setTimeout(() => setCameraActive(true), 10000);
+        console.log('Special encrypted number link opened automatically');
+        
+        // إعادة تعيين بعد 5 ثوانِ
+        setTimeout(() => {
+          setLastOpenedUrl('');
+          isProcessingRef.current = false;
+        }, 10000);
+        
+        return;
+      }
+
+      // إذا كان الناتج رابطاً بعد فك التشفير
+      if (isValidUrl(decryptedResult)) {
+        let finalUrl = decryptedResult.startsWith('http') ? decryptedResult : `https://${decryptedResult}`;
+        
+        // معالجة خاصة للرابط المشفر الجديد
+        if (decryptedResult.includes('scanned.page/p/82wMbe')) {
+          finalUrl = decryptedResult;
+        }
+        
+        if (lastOpenedUrl === finalUrl) {
+          console.log('Link already opened, skipping');
+          isProcessingRef.current = false;
+          return;
+        }
+        
+        setInputValue(decryptedResult);
+        setLastOpenedUrl(finalUrl);
+        
+        console.log('Opening decrypted URL:', finalUrl);
+        
+        // فتح الرابط المفكوك التشفير مباشرة
+        const tempLink = document.createElement('a');
+        tempLink.href = finalUrl;
+        tempLink.target = '_blank';
+        tempLink.rel = 'noopener noreferrer';
+        
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        setCameraActive(false);
+setTimeout(() => setCameraActive(true), 10000);
+        console.log('Decrypted URL opened automatically:', finalUrl);
+        
+        setTimeout(() => {
+          setLastOpenedUrl('');
+          isProcessingRef.current = false;
+        }, 5000);
+        
+        return;
+      }
+
+      // إذا كان النص العادي بعد فك التشفير
+      setInputValue(decryptedResult);
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(decryptedResult)}`;
+      
+      const tempLink = document.createElement('a');
+      tempLink.href = searchUrl;
+      tempLink.target = '_blank';
+      tempLink.rel = 'noopener noreferrer';
+      
+      document.body.appendChild(tempLink);
+      tempLink.click();
+      document.body.removeChild(tempLink);
+      
+      setTimeout(() => {
+        isProcessingRef.current = false;
+      }, 2000);
+      
       return;
     }
 
-    if (isValidUrl(result)) {
-      const finalUrl = result.startsWith('http') ? result : `https://${result}`;
-      handleScanSuccess(finalUrl);
-    } else {
-      // عرض النتيجة في حقل الإدخال
-      setInputValue(result);
-      const iframe = document.querySelector('iframe[name="iframe_qr"]') as HTMLIFrameElement;
-      if (iframe) {
-        iframe.src = '';
+    // إذا لم يكن مشفراً، تابع المعالجة العادية
+    // التحقق من الرقم المحدد العادي
+    if (result === '442069400596830') {
+      const specialUrl = 'https://scanned.page/p/82wMbe';
+      
+      if (lastOpenedUrl === specialUrl) {
+        console.log('Link already opened, skipping');
+        isProcessingRef.current = false;
+        return;
       }
+      
+      setInputValue(result);
+      setLastOpenedUrl(specialUrl);
+      
+      // فتح الرابط المخصص مباشرة
+      const tempLink = document.createElement('a');
+      tempLink.href = specialUrl;
+      tempLink.target = '_blank';
+      tempLink.rel = 'noopener noreferrer';
+      
+      document.body.appendChild(tempLink);
+      tempLink.click();
+      document.body.removeChild(tempLink);
+      
+      console.log('Special number link opened automatically');
+      
+      setTimeout(() => {
+        setLastOpenedUrl('');
+        isProcessingRef.current = false;
+      }, 5000);
+      
+      return;
     }
-  }, [scanState.lastScannedCode, isValidUrl, handleScanSuccess]);
 
+    // المعالجة العادية للباركودات غير المشفرة
+    setInputValue(result);
+    
+    // تحضير الرابط للفتح
+    let finalUrl = result;
+    
+    if (isValidUrl(result)) {
+      finalUrl = result.startsWith('http') ? result : `https://${result}`;
+    } else {
+      // للنصوص العادية، جرب البحث في Google
+      finalUrl = `https://www.google.com/search?q=${encodeURIComponent(result)}`;
+    }
+    
+    // التحقق من عدم فتح نفس الرابط مرتين
+    if (lastOpenedUrl === finalUrl) {
+      console.log('Link already opened, skipping');
+      isProcessingRef.current = false;
+      return;
+    }
+    
+    console.log('Opening URL automatically:', finalUrl);
+    setLastOpenedUrl(finalUrl);
+    
+    // إنشاء رابط مؤقت وتفعيله تلقائياً
+    const tempLink = document.createElement('a');
+    tempLink.href = finalUrl;
+    tempLink.target = '_blank';
+    tempLink.rel = 'noopener noreferrer';
+    
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
+    
+    console.log('Link clicked automatically');
+    
+    // إعادة تعيين بعد 5 ثوانِ
+    setTimeout(() => {
+      setLastOpenedUrl('');
+      isProcessingRef.current = false;
+    }, 5000);
+  }, [scanState.lastScannedCode, isValidUrl, lastOpenedUrl, decrypt, encryptionKey]);
+
+  // باقي الكود يبقى كما هو...
   // بدء الكاميرا والمسح
   const startScanning = useCallback(async () => {
     if (isScanningRef.current) {
@@ -174,6 +363,7 @@ function App() {
   // تنظيف الموارد
   const cleanup = useCallback(() => {
     isScanningRef.current = false;
+    isProcessingRef.current = false;
     
     if (readerRef.current) {
       readerRef.current.reset();
@@ -184,6 +374,8 @@ function App() {
       stream.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
+    setScannedUrl('');
+    setLastOpenedUrl('');
   }, []);
 
   // بدء المسح عند تحميل المكون
@@ -192,17 +384,14 @@ function App() {
       startScanning();
     }
     return cleanup;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraActive]);
+  }, [cameraActive, startScanning, cleanup]);
 
   // إيقاف/تشغيل الكاميرا
   const toggleCamera = useCallback(() => {
     if (cameraActive) {
       console.log('Stopping camera...');
-      // إيقاف المسح أولاً
       isScanningRef.current = false;
       
-      // إيقاف القارئ والفيديو
       if (readerRef.current) {
         try {
           readerRef.current.reset();
@@ -212,7 +401,6 @@ function App() {
         }
       }
       
-      // إيقاف تدفق الفيديو
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
         stream.getTracks().forEach(track => {
@@ -222,6 +410,7 @@ function App() {
         videoRef.current.srcObject = null;
       }
       
+      setScannedUrl('');
       setCameraActive(false);
       console.log('Camera stopped');
     } else {
@@ -230,12 +419,12 @@ function App() {
     }
   }, [cameraActive]);
 
-  // معالجة قراءة من حقل الإدخال
+  // معالجة قراءة من حقل الإدخال (بقيت كما كانت)
   const handleManualRead = useCallback(() => {
     if (inputValue.length >= 12) {
       // التحقق من الرقم المحدد
       if (inputValue === '442069400596830') {
-        window.open('https://scanned.page/p/82wMbe', '_blank');
+        window.open('https://scanned.page/82wMbe', '_blank');
         return;
       }
       
@@ -268,7 +457,7 @@ function App() {
               {/* الرأس */}
               <div data-v-d8b7d370="" className="banner">
                 <img data-v-d8b7d370="" src="qr_read.png" alt="QR Code" title="قراءة رمز الاستجابة السريعة" style={{padding: '8px'}} />
-                <span data-v-d8b7d370="" className="font " style={{fontSize: window.innerWidth <= 768 ? '2.2rem' : '2rem'}}>قراءة رمز الاستجابة السريعة</span>
+                <span data-v-d8b7d370="" className="font " style={{fontSize: '2.2rem'}}>قراءة رمز الاستجابة السريعة</span>
               </div>
               
               {/* منطقة الكاميرا */}
@@ -296,6 +485,30 @@ function App() {
                     <canvas data-v-35411cc1="" className="qrcode-stream-camera"></canvas>
                     <canvas data-v-35411cc1="" className="qrcode-stream-overlay"></canvas>
                     <div data-v-35411cc1="" className="qrcode-stream-overlay"></div>
+                    
+                    {/* عرض رسالة فك التشفير */}
+                    {scannedUrl && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        color: '#00ff00',
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        padding: '20px 30px',
+                        borderRadius: '12px',
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        zIndex: 1000,
+                        maxWidth: '90%',
+                        textAlign: 'center',
+                        wordBreak: 'break-all',
+                        boxShadow: '0 6px 20px rgba(0, 255, 0, 0.3)',
+                        border: '2px solid #00ff00'
+                      }}>
+                        {scannedUrl}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -313,7 +526,7 @@ function App() {
                 </button>
               </div>
               
-              {/* حقل إدخال رمز QR */}
+              {/* حقل إدخال رمز QR - بقي كما كان */}
               <div data-v-d8b7d370="" className="form-group row">
                 <div data-v-d8b7d370="" className="col-sm-4" style={{textAlign: 'center'}}>
                   <label data-v-d8b7d370="" htmlFor="QR" className="col-form-label" style={{color: 'rgb(44, 125, 191)', fontSize: '1.3rem'}}>
@@ -392,5 +605,20 @@ function App() {
     </>
   );
 }
+// const encryptionKey = "MySecretKey2024";
 
-export default App
+// function encrypt(text, key) {
+//   let result = '';
+//   for (let i = 0; i < text.length; i++) {
+//     const charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+//     result += String.fromCharCode(charCode);
+//   }
+//   return btoa(result); // نحوله Base64 عشان يصير نص متوافق مع QR
+// }
+
+// const originalUrl = "https://scanned.page/p/82wMbe";
+
+// // التشفيــــر
+// const encryptedUrl = encrypt(originalUrl, encryptionKey);
+// console.log("🔒 Encrypted URL:", encryptedUrl);
+export default App;
