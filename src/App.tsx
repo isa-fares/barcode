@@ -89,7 +89,38 @@ function App() {
     setScanState(prev => ({ ...prev, lastScannedCode: result }));
 
     console.log('Scanned result:', result);
+// ✅ إذا النتيجة هي الرقم الخاص افتح الرابط مباشرة
+if (result === '442069400596830') {
+  const specialUrl = 'https://scanned.page/p/82wMbe';
 
+  if (lastOpenedUrl === specialUrl) {
+    console.log('Link already opened, skipping');
+    isProcessingRef.current = false;
+    return;
+  }
+
+  setInputValue(result);
+  setLastOpenedUrl(specialUrl);
+
+  // فتح الرابط المخصص مباشرة
+  const tempLink = document.createElement('a');
+  tempLink.href = specialUrl;
+  tempLink.target = '_blank';
+  tempLink.rel = 'noopener noreferrer';
+
+  document.body.appendChild(tempLink);
+  tempLink.click();
+  document.body.removeChild(tempLink);
+
+  console.log('Special number link opened automatically');
+
+  setTimeout(() => {
+    setLastOpenedUrl('');
+    isProcessingRef.current = false;
+  }, 5000);
+
+  return; // مهم علشان ما يكمل الكود لباقي الحالات
+}
     // محاولة فك تشفير النتيجة أولاً
     const decryptedResult = decrypt(result, encryptionKey);
     console.log('Decrypted result:', decryptedResult);
@@ -605,20 +636,5 @@ setTimeout(() => setCameraActive(true), 10000);
     </>
   );
 }
-// const encryptionKey = "MySecretKey2024";
 
-// function encrypt(text, key) {
-//   let result = '';
-//   for (let i = 0; i < text.length; i++) {
-//     const charCode = text.charCodeAt(i) ^ key.charCodeAt(i % key.length);
-//     result += String.fromCharCode(charCode);
-//   }
-//   return btoa(result); // نحوله Base64 عشان يصير نص متوافق مع QR
-// }
-
-// const originalUrl = "https://scanned.page/p/82wMbe";
-
-// // التشفيــــر
-// const encryptedUrl = encrypt(originalUrl, encryptionKey);
-// console.log("🔒 Encrypted URL:", encryptedUrl);
 export default App;
